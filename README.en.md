@@ -4,7 +4,10 @@
 
 An unofficial, self-hosted scheduler for povo2.0 promo codes. It can use GitHub Actions to perform email OTP login, store the session in an encrypted bundle, and run on a schedule. A Docker deployment with a LAN management dashboard is also available.
 
-This repository is maintained as public source and a deployment template; it does not host the maintainer's active account state. Each user should keep encrypted `state/session.enc` and Repository Secrets in a separate runner repository, isolating source maintenance from live account operation.
+This repository is an isolated deployment generated from the public source. It keeps encrypted account state and Repository Secrets separate while shared code and documentation remain maintained upstream.
+
+> [!NOTE]
+> This private repository is the maintainer's isolated small-account runner and stores that account's re-encrypted `state/session.enc`. Public source and updates remain canonical in [`povo2.0-promo-automation`](https://github.com/azarashi11037/povo2.0-promo-automation).
 
 > [!WARNING]
 > This project uses undocumented APIs that may change with povo2.0 app updates. It is not supported or endorsed by povo2.0/KDDI. Use only accounts you are authorized to manage and review the applicable terms yourself. The project does not bypass OTP, TLS verification, root restrictions, or access controls.

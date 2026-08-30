@@ -4,7 +4,10 @@
 
 一个非官方、自托管的 povo2.0 promo code 定时执行器。支持通过 GitHub Actions 完成邮箱验证码登录、加密保存会话并按计划执行，也可以部署为带局域网管理面板的 Docker 服务。
 
-本仓库定位为公开源码与部署模板，不承载维护者正在使用的账户状态。每个使用者应在自己的独立运行仓库中保存加密的 `state/session.enc` 和 Repository Secret，从而让源码维护与实际账户运行相互隔离。
+本仓库是从公开源码生成的独立部署副本，用于隔离保存加密账户状态和 Repository Secret；通用代码与说明在公开上游仓库维护。
+
+> [!NOTE]
+> 当前仓库是维护者小号的私有运行实例，会保存该账户重新加密后的 `state/session.enc`；公开源码与更新仍以 [`povo2.0-promo-automation`](https://github.com/azarashi11037/povo2.0-promo-automation) 为准。
 
 > [!WARNING]
 > 本项目使用未公开、可能随 povo2.0 App 更新而变化的接口，不受 povo2.0/KDDI 支持或认可。请只操作本人有权管理的账户，并自行确认适用条款。项目不绕过验证码、TLS 校验、Root 限制或访问控制。
