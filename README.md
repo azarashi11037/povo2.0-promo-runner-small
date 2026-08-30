@@ -8,7 +8,10 @@
 
 一个非官方、自托管的 povo2.0 promo code 定时执行器。支持通过 GitHub Actions 完成邮箱验证码登录、加密保存会话并按计划执行，也可以部署为带局域网管理面板的 Docker 服务。
 
-本仓库定位为公开源码与部署模板，不承载维护者正在使用的账户状态。每个使用者应在自己的独立运行仓库中保存加密的 `state/session.enc` 和 Repository Secret，从而让源码维护与实际账户运行相互隔离。
+本仓库是从公开源码生成的独立部署副本，用于隔离保存加密账户状态和 Repository Secret；通用代码与说明在公开上游仓库维护。
+
+> [!NOTE]
+> 当前仓库是维护者小号的私有运行实例，会保存该账户重新加密后的 `state/session.enc`；公开源码与更新仍以 [`povo2.0-promo-automation`](https://github.com/azarashi11037/povo2.0-promo-automation) 为准。
 
 > [!WARNING]
 > 本项目使用未公开、可能随 povo2.0 App 更新而变化的接口，不受 povo2.0/KDDI 支持或认可。请只操作本人有权管理的账户，并自行确认适用条款。项目不绕过验证码、TLS 校验、Root 限制或访问控制。
@@ -115,7 +118,10 @@ docker compose build
 
 一個非官方、自行託管的 povo2.0 promo code 定時執行器。它可透過 GitHub Actions 完成電子郵件驗證碼登入、加密保存工作階段並依排程執行，也可部署成附有區域網路管理面板的 Docker 服務。
 
-本倉庫定位為公開原始碼與部署範本，不承載維護者正在使用的帳戶狀態。每位使用者應在自己的獨立執行倉庫中保存加密的 `state/session.enc` 與 Repository Secret，讓原始碼維護和實際帳戶執行彼此隔離。
+本倉庫是從公開原始碼產生的獨立部署副本，用於隔離保存加密帳戶狀態與 Repository Secret；通用程式碼和說明在公開上游倉庫維護。
+
+> [!NOTE]
+> 目前倉庫是維護者小號的私有執行實例，會保存該帳戶重新加密後的 `state/session.enc`；公開原始碼與更新仍以 [`povo2.0-promo-automation`](https://github.com/azarashi11037/povo2.0-promo-automation) 為準。
 
 > [!WARNING]
 > 本專案使用未公開、可能隨 povo2.0 App 更新而改變的介面，不受 povo2.0/KDDI 支援或認可。請只操作本人有權管理的帳戶，並自行確認適用條款。本專案不繞過驗證碼、TLS 驗證、Root 限制或存取控制。
@@ -214,7 +220,10 @@ POVO_ENABLE_REDEMPTION=1
 
 povo2.0 の promo code を指定時刻に処理するための、非公式かつセルフホスト型のツールです。GitHub Actions でメール OTP ログイン、セッションの暗号化保存、スケジュール実行を行えるほか、LAN 管理画面付きの Docker サービスとしても利用できます。
 
-このリポジトリは公開ソースおよびデプロイ用テンプレートとして管理し、メンテナーが実際に使用するアカウント状態は保存しません。各利用者は独立した実行リポジトリに暗号化済み `state/session.enc` と Repository Secret を保存し、ソース保守と実アカウント運用を分離してください。
+このリポジトリは公開ソースから作成した独立デプロイであり、暗号化済みアカウント状態と Repository Secret を分離保存します。共通コードと説明は公開 upstream で保守します。
+
+> [!NOTE]
+> このリポジトリはメンテナーのサブアカウント用プライベート実行インスタンスであり、再暗号化された `state/session.enc` を保存します。公開ソースと更新は引き続き [`povo2.0-promo-automation`](https://github.com/azarashi11037/povo2.0-promo-automation) を正本とします。
 
 > [!WARNING]
 > 本プロジェクトは非公開 API を使用しており、povo2.0/KDDI によるサポートまたは承認を受けていません。API はアプリ更新により変更される可能性があります。自分が管理権限を持つアカウントだけを使用し、適用される規約を自分で確認してください。OTP、TLS 検証、Root 制限、アクセス制御を回避する機能はありません。
@@ -313,7 +322,10 @@ POVO_ENABLE_REDEMPTION=1
 
 An unofficial, self-hosted scheduler for povo2.0 promo codes. It can use GitHub Actions to perform email OTP login, store the session in an encrypted bundle, and run on a schedule. A Docker deployment with a LAN management dashboard is also available.
 
-This repository is maintained as public source and a deployment template; it does not host the maintainer's active account state. Each user should keep encrypted `state/session.enc` and Repository Secrets in a separate runner repository, isolating source maintenance from live account operation.
+This repository is an isolated deployment generated from the public source. It keeps encrypted account state and Repository Secrets separate while shared code and documentation remain maintained upstream.
+
+> [!NOTE]
+> This private repository is the maintainer's isolated small-account runner and stores that account's re-encrypted `state/session.enc`. Public source and updates remain canonical in [`povo2.0-promo-automation`](https://github.com/azarashi11037/povo2.0-promo-automation).
 
 > [!WARNING]
 > This project uses undocumented APIs that may change with povo2.0 app updates. It is not supported or endorsed by povo2.0/KDDI. Use only accounts you are authorized to manage and review the applicable terms yourself. The project does not bypass OTP, TLS verification, root restrictions, or access controls.
