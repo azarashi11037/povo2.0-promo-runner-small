@@ -1,0 +1,101 @@
+name: povo2.0 session keeper
+
+on:
+  schedule:
+    # Hourly at :32 UTC, away from the top-of-hour load spike. A run waits only
+    # when encrypted next_due_at is no more than 65 minutes away.
+    - cron: "32 * * * *"
+  workflow_dispatch:
+    inputs:
+      redeem_now:
+        description: "Explicitly redeem once now, ignoring next_due_at"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: povo-session-state
+  cancel-in-progress: false
+
+jobs:
+  keep-session-and-run-if-due:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      POVO_BUNDLE_KEY: ${{ secrets.POVO_BUNDLE_KEY }}
+      POVO_ENABLE_REDEMPTION: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Decrypt private session into the ephemeral runner
+        id: decrypt
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-data
+        run: |
+          set -euo pipefail
+          test -s state/session.enc
+          python tools/session_bundle.py unpack \
+            --input state/session.enc \
+            --data-dir "$POVO_DATA_DIR"
+          before_dir="$RUNNER_TEMP/povo-before"
+          install -d -m 700 "$before_dir"
+          cp "$POVO_DATA_DIR/credentials.xml" "$before_dir/credentials.xml"
+          cp "$POVO_DATA_DIR/state.json" "$before_dir/state.json"
+      - name: Refresh once and redeem only when due
+        id: execute
+        continue-on-error: true
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-data
+          POVO_CONFIRM_REDEEM_NOW: ${{ github.event_name == 'workflow_dispatch' && inputs.redeem_now && '1' || '0' }}
+        run: |
+          set -euo pipefail
+          if [[ "$POVO_CONFIRM_REDEEM_NOW" == "1" ]]; then
+            python povo_worker.py --redeem-now
+          elif [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
+            python povo_worker.py --once --wait-until-due --max-wait-seconds 3900
+          else
+            python povo_worker.py --once
+          fi
+      - name: Detect protected state changes
+        id: changes
+        if: always() && steps.decrypt.outcome == 'success'
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-data
+        run: |
+          if cmp -s "$POVO_DATA_DIR/credentials.xml" "$RUNNER_TEMP/povo-before/credentials.xml" \
+            && cmp -s "$POVO_DATA_DIR/state.json" "$RUNNER_TEMP/povo-before/state.json"; then
+            echo "required=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Re-encrypt updated session
+        id: encrypt
+        if: always() && steps.changes.outputs.required == 'true'
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-data
+        run: |
+          set -euo pipefail
+          python tools/session_bundle.py pack \
+            --data-dir "$POVO_DATA_DIR" \
+            --output state/session.enc
+      - name: Persist ciphertext only
+        if: always() && steps.encrypt.outcome == 'success'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --force state/session.enc
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh encrypted povo2.0 session state"
+            git push
+          fi
+      - name: Preserve execution failure status
+        if: always() && steps.execute.outcome == 'failure'
+        run: exit 1

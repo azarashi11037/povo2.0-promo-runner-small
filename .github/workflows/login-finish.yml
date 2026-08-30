@@ -1,0 +1,72 @@
+name: Finish povo2.0 login and redeem once
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: povo-session-state
+  cancel-in-progress: false
+
+jobs:
+  finish-email-login:
+    runs-on: ubuntu-latest
+    env:
+      POVO_BUNDLE_KEY: ${{ secrets.POVO_BUNDLE_KEY }}
+      POVO_LOGIN_OTP: ${{ secrets.POVO_LOGIN_OTP }}
+      POVO_PROMO_CODE: ${{ secrets.POVO_PROMO_CODE }}
+      POVO_ENABLE_REDEMPTION: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Complete login and create encrypted session
+        id: login
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-login
+        run: |
+          set -euo pipefail
+          test -s state/login.enc
+          install -d -m 700 "$POVO_DATA_DIR"
+          python tools/login_session.py finish \
+            --challenge state/login.enc \
+            --data-dir "$POVO_DATA_DIR" \
+            --output state/session.enc
+          python povo_api.py \
+            --credentials "$POVO_DATA_DIR/credentials.xml" \
+            --device "$POVO_DATA_DIR/device.xml" \
+            inspect
+      - name: Redeem once and start the seven-day schedule
+        id: redeem
+        continue-on-error: true
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-login
+          POVO_CONFIRM_REDEEM_NOW: "1"
+        run: python povo_worker.py --redeem-now
+      - name: Re-encrypt the resulting session and schedule
+        id: encrypt
+        if: always() && steps.login.outcome == 'success'
+        env:
+          POVO_DATA_DIR: ${{ runner.temp }}/povo-login
+        run: |
+          python tools/session_bundle.py pack \
+            --data-dir "$POVO_DATA_DIR" \
+            --output state/session.enc
+      - name: Replace challenge with session ciphertext
+        if: always() && steps.encrypt.outcome == 'success'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --force state/session.enc
+          git rm --ignore-unmatch state/login.enc
+          git commit -m "Create encrypted povo2.0 session from email login"
+          git push
+      - name: Preserve first-redemption failure status
+        if: always() && steps.redeem.outcome == 'failure'
+        run: exit 1
